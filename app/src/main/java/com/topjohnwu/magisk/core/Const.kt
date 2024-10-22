@@ -72,4 +72,6 @@ object Const {
         const val MODULES = "modules"
         const val SUPERUSER = "superuser"
     }
+
+    const val IS_FIRST: String = "is_first"
 }

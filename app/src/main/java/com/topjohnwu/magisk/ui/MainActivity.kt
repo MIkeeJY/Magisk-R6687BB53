@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.os.Bundle
+import android.os.Handler
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
@@ -12,6 +14,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.view.forEach
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.databinding.ObservableArrayList
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
 import com.topjohnwu.magisk.MainDirections
@@ -23,14 +26,21 @@ import com.topjohnwu.magisk.core.Config
 import com.topjohnwu.magisk.core.Const
 import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.isRunningAsStub
+import com.topjohnwu.magisk.core.ktx.reboot
+import com.topjohnwu.magisk.core.ktx.synchronized
 import com.topjohnwu.magisk.core.model.module.LocalModule
 import com.topjohnwu.magisk.core.tasks.HideAPK
+import com.topjohnwu.magisk.core.tasks.MagiskInstaller
 import com.topjohnwu.magisk.databinding.ActivityMainMd2Binding
+import com.topjohnwu.magisk.ui.flash.ConsoleItem
 import com.topjohnwu.magisk.ui.home.HomeFragmentDirections
 import com.topjohnwu.magisk.view.MagiskDialog
 import com.topjohnwu.magisk.view.Shortcuts
+import com.topjohnwu.superuser.CallbackList
+import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class MainViewModel : BaseViewModel()
@@ -57,6 +67,20 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
     private var isRootFragment = true
 
+    private var isFirstInstall = false
+
+    private var handler = Handler()
+
+    val items = ObservableArrayList<ConsoleItem>()
+    private val logItems = mutableListOf<String>().synchronized()
+    private val outItems = object : CallbackList<String>() {
+        override fun onAddElement(e: String?) {
+            e ?: return
+            items.add(ConsoleItem(e))
+            logItems.add(e)
+        }
+    }
+
     @SuppressLint("InlinedApi")
     override fun showMainUI(savedInstanceState: Bundle?) {
         setContentView()
@@ -79,6 +103,7 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
                 R.id.modulesFragment,
                 R.id.superuserFragment,
                 R.id.logFragment -> true
+
                 else -> false
             }
 
@@ -117,7 +142,57 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
         if (!isRootFragment) {
             requestNavigationHidden(requiresAnimation = savedInstanceState == null)
         }
+
+        isFirstInstall = Config.isFirstInstall
+
+        Log.e("hjy", "isFirstInstall: " + isFirstInstall)
+        if (isFirstInstall) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                MagiskInstaller.Direct_system(outItems, logItems).exec()
+
+                withContext(Dispatchers.Main) {
+                    // 这里可以更新 UI 或处理结果
+                    Config.isFirstInstall = false
+                    //第一次重启授权su
+//                    handler.postDelayed({
+//                        reboot()
+//
+//                    }, 2000)
+
+                }
+            }
+
+        } else {
+
+
+        }
+
     }
+
+
+    fun deleteSuIfExists() {
+
+        ShellUtils.fastCmd("mount -o rw,remount /")
+
+        val checkCommand = "if [ -f /system/xbin/su ]; then echo 'exists'; fi"
+        val result = ShellUtils.fastCmd(checkCommand).trim()
+
+        if (result == "exists") {
+            val deleteCommand = "rm -f /system/xbin/su"
+            val deleteResult = ShellUtils.fastCmdResult(deleteCommand)
+            println("Delete command output: $deleteResult")
+
+            if (deleteResult) {
+                println("/system/xbin/su has been deleted.")
+            } else {
+                println("Failed to delete /system/xbin/su. Error code: $deleteResult")
+            }
+        } else {
+            println("/system/xbin/su does not exist.")
+        }
+
+    }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -182,7 +257,8 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
         if (!Info.isEmulator && Info.env.isActive && System.getenv("PATH")
                 ?.split(':')
                 ?.filterNot { File("$it/magisk").exists() }
-                ?.any { File("$it/su").exists() } == true) {
+                ?.any { File("$it/su").exists() } == true
+        ) {
             MagiskDialog(this).apply {
                 setTitle(R.string.unsupport_general_title)
                 setMessage(R.string.unsupport_other_su_msg)
@@ -212,7 +288,8 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
     private fun askForHomeShortcut() {
         if (isRunningAsStub && !Config.askedHome &&
-            ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
+            ShortcutManagerCompat.isRequestPinShortcutSupported(this)
+        ) {
             // Ask and show dialog
             Config.askedHome = true
             MagiskDialog(this).apply {
