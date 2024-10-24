@@ -71,16 +71,6 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
     private var handler = Handler()
 
-    val items = ObservableArrayList<ConsoleItem>()
-    private val logItems = mutableListOf<String>().synchronized()
-    private val outItems = object : CallbackList<String>() {
-        override fun onAddElement(e: String?) {
-            e ?: return
-            items.add(ConsoleItem(e))
-            logItems.add(e)
-        }
-    }
-
     @SuppressLint("InlinedApi")
     override fun showMainUI(savedInstanceState: Bundle?) {
         setContentView()
@@ -147,24 +137,26 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
         Log.e("hjy", "isFirstInstall: " + isFirstInstall)
         if (isFirstInstall) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                MagiskInstaller.Direct_system(outItems, logItems).exec()
-
-                withContext(Dispatchers.Main) {
-                    // 这里可以更新 UI 或处理结果
-                    Config.isFirstInstall = false
-                    //第一次重启授权su
-//                    handler.postDelayed({
-//                        reboot()
-//
-//                    }, 2000)
-
-                }
-            }
+            HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
+            Config.zygisk = true
 
         } else {
+            if (!Info.isZygiskEnabled) {
+//                Config.zygisk = true
 
+//                val checkCommand = "magisk --install-module /sdcard/LSPosed-v1.10.0-7089-zygisk-release.zip"
+//                val result = ShellUtils.fastCmd(checkCommand).trim()
+//                println("install command output: $result")
+//
+//                if (result.contains("Done")) {
+//                    reboot()
+//                } else {
+//                    println("install lsposed failed")
+//                }
 
+            }
+
+            deleteSuIfExists()
         }
 
     }
@@ -193,6 +185,31 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
     }
 
+
+    fun createSU() {
+
+        ShellUtils.fastCmd("mount -o rw,remount /")
+
+        val checkCommand = "if [ -f /system/xbin/su ]; then echo 'exists'; fi"
+        val result = ShellUtils.fastCmd(checkCommand).trim()
+
+        if (result == "exists") {
+
+        } else {
+
+            val createCommand = "cd /system/xbin && ln -sf ./cusu su 2>&1"
+            val createResult = ShellUtils.fastCmd(createCommand).trim()
+            println("Create command output: $createResult")
+
+            if (createResult.isNotEmpty()) {
+                println("/system/xbin/su has been created.")
+            } else {
+                println("Failed to create /system/xbin/su. Error details: $createResult")
+            }
+
+        }
+
+    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {

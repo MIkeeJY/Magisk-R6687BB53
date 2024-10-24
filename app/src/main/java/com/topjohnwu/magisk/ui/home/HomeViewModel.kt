@@ -152,7 +152,7 @@ class HomeViewModel(
         val cmd = "env_check ${Info.env.versionString} ${Info.env.versionCode}"
         val code = Shell.cmd(cmd).await().code
         if (code != 0) {
-            EnvFixDialog(this, code).show()
+//            EnvFixDialog(this, code).show()
         }
         checkedEnv = true
     }

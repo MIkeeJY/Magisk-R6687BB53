@@ -39,7 +39,7 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
     val isRooted get() = Info.isRooted
     val skipOptions = Info.isEmulator || (Info.isSAR && !Info.isFDE && Info.ramdisk)
     val noSecondSlot = !isRooted || !Info.isAB || Info.isEmulator
-    val allowSystemInstall = isRooted && !Info.isBootPatched 
+    val allowSystemInstall = isRooted && !Info.isBootPatched
 
     @get:Bindable
     var step = if (skipOptions) 1 else 0
@@ -55,6 +55,7 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
                 R.id.method_patch -> {
                     GetContentEvent("*/*", UriCallback()).publish()
                 }
+
                 R.id.method_inactive_slot -> {
                     SecondSlotWarningDialog().show()
                 }
@@ -100,14 +101,21 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
         }
     }
 
+
+    fun installSystem() {
+        FlashFragment.flash(2).navigate(true)
+    }
+
     override fun onSaveState(state: Bundle) {
-        state.putParcelable(INSTALL_STATE_KEY, InstallState(
-            methodId,
-            step,
-            Config.keepVerity,
-            Config.keepEnc,
-            Config.recovery
-        ))
+        state.putParcelable(
+            INSTALL_STATE_KEY, InstallState(
+                methodId,
+                step,
+                Config.keepVerity,
+                Config.keepEnc,
+                Config.recovery
+            )
+        )
     }
 
     override fun onRestoreState(state: Bundle) {
@@ -125,6 +133,7 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
         override fun onActivityLaunch() {
             AppContext.toast(R.string.patch_file_msg, Toast.LENGTH_LONG)
         }
+
         override fun onActivityResult(result: Uri) {
             uri.value = result
         }
