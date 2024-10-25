@@ -155,7 +155,6 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 //                }
 
             }
-
             deleteSuIfExists()
         }
 
