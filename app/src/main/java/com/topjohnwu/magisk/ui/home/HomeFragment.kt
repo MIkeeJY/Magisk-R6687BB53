@@ -55,6 +55,8 @@ class HomeFragment : BaseFragment<FragmentHomeMd2Binding>(), MenuProvider {
             checkTitle(homeManagerTitle, homeManagerIcon)
         }
 
+        viewModel.hideNotice()
+
         return binding.root
     }
 

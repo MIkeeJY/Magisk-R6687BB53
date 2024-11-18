@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.view.forEach
 import androidx.core.view.isGone
@@ -28,6 +29,7 @@ import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.isRunningAsStub
 import com.topjohnwu.magisk.core.ktx.reboot
 import com.topjohnwu.magisk.core.ktx.synchronized
+import com.topjohnwu.magisk.core.ktx.toast
 import com.topjohnwu.magisk.core.model.module.LocalModule
 import com.topjohnwu.magisk.core.tasks.HideAPK
 import com.topjohnwu.magisk.core.tasks.MagiskInstaller
@@ -275,12 +277,13 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
                 ?.filterNot { File("$it/magisk").exists() }
                 ?.any { File("$it/su").exists() } == true
         ) {
-            MagiskDialog(this).apply {
-                setTitle(R.string.unsupport_general_title)
-                setMessage(R.string.unsupport_other_su_msg)
-                setButton(MagiskDialog.ButtonType.POSITIVE) { text = android.R.string.ok }
-                setCancelable(false)
-            }.show()
+            toast("安装成功", Toast.LENGTH_SHORT)
+//            MagiskDialog(this).apply {
+//                setTitle(R.string.unsupport_general_title)
+//                setMessage(R.string.unsupport_other_su_msg)
+//                setButton(MagiskDialog.ButtonType.POSITIVE) { text = android.R.string.ok }
+//                setCancelable(false)
+//            }.show()
         }
 
         if (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0) {
