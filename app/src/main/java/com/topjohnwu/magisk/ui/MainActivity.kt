@@ -24,6 +24,8 @@ import com.topjohnwu.magisk.arch.BaseViewModel
 import com.topjohnwu.magisk.arch.startAnimations
 import com.topjohnwu.magisk.arch.viewModel
 import com.topjohnwu.magisk.core.Config
+import com.topjohnwu.magisk.core.Config.context
+import com.topjohnwu.magisk.core.Config.fileName
 import com.topjohnwu.magisk.core.Const
 import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.isRunningAsStub
@@ -137,15 +139,37 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
         isFirstInstall = Config.isFirstInstall
 
+
+        val checkCommand = "magisk -V"
+        val result = ShellUtils.fastCmd(checkCommand).trim()
+        println("check magisk command output: $result")
+
+
         Log.e("hjy", "isFirstInstall: " + isFirstInstall)
         if (isFirstInstall) {
-            HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
             Config.zygisk = true
+
+            if (result.isNotEmpty() && result.contains("27001")) {
+                println("Magisk has installed,don't need to install again")
+                Config.isFirstInstall = false
+                reboot()
+            } else {
+                println("Magisk environment has not installed")
+                HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
+            }
+
 
         } else {
             if (!Info.isZygiskEnabled) {
-//                Config.zygisk = true
+                Config.zygisk = true
 
+                if (result.isNotEmpty() && result.contains("27001")) {
+                    println("Magisk has installed,don't need to install again")
+                } else {
+                    println("Magisk environment has not installed")
+                    Config.isFirstInstall = true
+                    HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
+                }
 //                val checkCommand = "magisk --install-module /sdcard/LSPosed-v1.10.0-7089-zygisk-release.zip"
 //                val result = ShellUtils.fastCmd(checkCommand).trim()
 //                println("install command output: $result")
