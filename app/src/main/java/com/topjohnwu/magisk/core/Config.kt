@@ -126,6 +126,7 @@ object Config : PreferenceConfig, DBConfig {
     var askedHome by preference(Key.ASKED_HOME, false)
 
     var isFirstInstall by preference(Const.IS_FIRST, true)
+    var hasInstalled by preference(Const.HAS_INSTALLED, true)
 
     var downloadDir by preference(Key.DOWNLOAD_DIR, "")
     var repoOrder by preference(Key.REPO_ORDER, Value.ORDER_DATE)

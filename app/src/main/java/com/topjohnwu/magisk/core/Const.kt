@@ -74,4 +74,5 @@ object Const {
     }
 
     const val IS_FIRST: String = "is_first"
+    const val HAS_INSTALLED: String = "has_installed"
 }

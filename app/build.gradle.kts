@@ -40,6 +40,8 @@ android {
         }
     }
 
+    ndkVersion = "26.1.10909125"
+
     buildFeatures {
         dataBinding = true
         aidl = true
