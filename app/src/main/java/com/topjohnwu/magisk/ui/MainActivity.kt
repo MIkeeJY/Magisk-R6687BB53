@@ -73,8 +73,6 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
     private var isFirstInstall = false
 
-    private var hasInstalled = false
-
     private var handler = Handler()
 
     @SuppressLint("InlinedApi")
@@ -140,7 +138,6 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
         }
 
         isFirstInstall = Config.isFirstInstall
-        hasInstalled = Config.hasInstalled
 
 
         val checkCommand = "magisk -V"
@@ -154,11 +151,10 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
             if (result.isNotEmpty() && result.contains("27001")) {
                 println("Magisk has installed,don't need to install again")
-                Config.hasInstalled = true
+                Config.isFirstInstall = false
                 reboot()
             } else {
                 println("Magisk environment has not installed")
-                Config.hasInstalled = false
                 HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
             }
 
@@ -169,10 +165,9 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 
                 if (result.isNotEmpty() && result.contains("27001")) {
                     println("Magisk has installed,don't need to install again")
-                    Config.hasInstalled = true
                 } else {
                     println("Magisk environment has not installed")
-                    Config.hasInstalled = false
+                    Config.isFirstInstall = true
                     HomeFragmentDirections.actionHomeFragmentToInstallFragment().navigate()
                 }
 //                val checkCommand = "magisk --install-module /sdcard/LSPosed-v1.10.0-7089-zygisk-release.zip"
@@ -186,9 +181,7 @@ class MainActivity : SplashActivity<ActivityMainMd2Binding>() {
 //                }
 
             }
-            if (hasInstalled) {
-                deleteSuIfExists()
-            }
+            deleteSuIfExists()
         }
 
     }

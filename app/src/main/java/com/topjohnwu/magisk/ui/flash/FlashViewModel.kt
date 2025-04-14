@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.topjohnwu.magisk.BR
 import com.topjohnwu.magisk.R
 import com.topjohnwu.magisk.arch.BaseViewModel
+import com.topjohnwu.magisk.core.Config
 import com.topjohnwu.magisk.core.Const
 import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.ktx.reboot
@@ -61,38 +62,52 @@ class FlashViewModel : BaseViewModel() {
                     uri ?: return@launch
                     FlashZip(uri, outItems, logItems).exec()
                 }
+
                 Const.Value.UNINSTALL -> {
                     showReboot = false
                     MagiskInstaller.Uninstall(outItems, logItems).exec()
                 }
+
                 Const.Value.FLASH_MAGISK -> {
                     if (Info.isEmulator)
                         MagiskInstaller.Emulator(outItems, logItems).exec()
                     else
                         MagiskInstaller.Direct(outItems, logItems).exec()
                 }
+
                 Const.Value.FLASH_MAGISK_SYSTEM -> {
                     MagiskInstaller.Direct_system(outItems, logItems).exec()
                 }
+
                 Const.Value.FLASH_INACTIVE_SLOT -> {
                     MagiskInstaller.SecondSlot(outItems, logItems).exec()
                 }
+
                 Const.Value.PATCH_FILE -> {
                     uri ?: return@launch
                     showReboot = false
                     MagiskInstaller.Patch(uri, outItems, logItems).exec()
                 }
+
                 else -> {
                     back()
                     return@launch
                 }
             }
-            onResult(result)
+            onResult(result, action)
         }
     }
 
-    private fun onResult(success: Boolean) {
+    private fun onResult(success: Boolean, action: String) {
         _state.value = if (success) State.SUCCESS else State.FAILED
+        if (Const.Value.FLASH_MAGISK_SYSTEM == action){
+            if (success){
+                Config.isFirstInstall = false
+                println("Magisk:" + "reboot")
+
+                reboot()
+            }
+        }
     }
 
     fun onMenuItemClicked(item: MenuItem): Boolean {

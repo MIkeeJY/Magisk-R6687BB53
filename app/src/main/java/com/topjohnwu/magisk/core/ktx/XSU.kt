@@ -10,7 +10,8 @@ fun reboot(reason: String = if (Config.recovery) "recovery" else "") {
         // KEYCODE_POWER = 26, hide incorrect "Factory data reset" message
         Shell.cmd("/system/bin/input keyevent 26").submit()
     }
-    Shell.cmd("/system/bin/svc power reboot $reason || /system/bin/reboot $reason").submit()
+    println("submit reboot:/system/bin/reboot")
+    Shell.cmd("/system/bin/reboot $reason").submit()
 }
 
 suspend fun Shell.Job.await() = withContext(Dispatchers.IO) { exec() }
